@@ -1,6 +1,8 @@
 package main
 
 import (
+	"film_library"
+	"film_library/pkg/handler"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"log"
@@ -18,17 +20,16 @@ type config struct {
 }
 
 func main() {
-
 	var c config
 	c.getConfig()
 
 	fmt.Println(c)
-	//srv := new(Server)
-	//go func() {
-	//	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
-	//		fmt.Printf("error occured while running http server: %s", err.Error())
-	//	}
-	//}()
+	srv := new(film_library.Server)
+	go func() {
+		if err := srv.Run(c.Port, handler.InitRoutes()); err != nil {
+			fmt.Printf("error occured while running http server: %s", err.Error())
+		}
+	}()
 }
 
 func (cfg *config) getConfig() *config {

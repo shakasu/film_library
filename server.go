@@ -1,4 +1,4 @@
-package config
+package film_library
 
 import (
 	"context"
