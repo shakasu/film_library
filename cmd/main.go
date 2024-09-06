@@ -1,11 +1,10 @@
 package main
 
 import (
-	"film_library"
-	"film_library/pkg/handler"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"log"
+	"net/http"
 	"os"
 )
 
@@ -24,12 +23,24 @@ func main() {
 	c.getConfig()
 
 	fmt.Println(c)
-	srv := new(film_library.Server)
-	go func() {
-		if err := srv.Run(c.Port, handler.InitRoutes()); err != nil {
-			fmt.Printf("error occured while running http server: %s", err.Error())
-		}
-	}()
+	//srv := new(film_library.Server)
+
+	// Регистрируем два новых обработчика и соответствующие URL-шаблоны в
+	// маршрутизаторе servemux
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Привет из Snippetbox"))
+	})
+
+	log.Println("Запуск веб-сервера на http://127.0.0.1:4000")
+	err := http.ListenAndServe(":4000", mux)
+	log.Fatal(err)
+
+	//go func() {
+	//	if err := srv.Run(c.Port, mux); err != nil {
+	//		fmt.Printf("error occured while running http server: %s", err.Error())
+	//	}
+	//}()
 }
 
 func (cfg *config) getConfig() *config {
