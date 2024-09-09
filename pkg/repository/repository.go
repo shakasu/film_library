@@ -14,7 +14,7 @@ func NewRepository(db *sql.DB) *Repository {
 }
 
 type Actor interface {
-	Add(actorId int, actor *model.Actor) (*model.Actor, error)
+	Add(actor *model.Actor) (*model.Actor, error)
 	Update(actorId int, actor *model.Actor) (*model.Actor, error)
 	Delete(actorId int) (*model.Actor, error)
 }

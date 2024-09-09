@@ -1,74 +1,60 @@
 package main
 
 import (
+	"database/sql"
+	"film_library/pkg/handler"
+	"film_library/pkg/repository"
 	"fmt"
+	_ "github.com/lib/pq"
 	"gopkg.in/yaml.v3"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 type config struct {
 	Port string `yaml:"port"`
 	Db   struct {
-		Username string `yaml:"username"`
 		Host     string `yaml:"host"`
-		Port     string `yaml:"port"`
-		Dbname   string `yaml:"dbname"`
+		Port     int    `yaml:"port"`
+		User     string `yaml:"user"`
 		Password string `yaml:"password"`
+		Dbname   string `yaml:"name"`
+		Sslmode  string `yaml:"sslmode"`
+		Driver   string `yaml:"driver"`
 	}
 }
 
 func main() {
 	var c config
-	c.getConfig()
-
-	fmt.Println(c)
-	//db := film_library.NewDB("postgres", "user=root dbname=tutorial password=root sslmode=disable")
-	//Read request body
-	//productRequest := Product{}
-	//err := helper.ReadFromRequestBody(request, &productRequest)
-	//if err != nil {
-	//	helper.WriteErrToResponseBody(writer, err)
-	//	return
-	//}
-	//
-	////Query to insert data
-	//SQL := `INSERT INTO "products" (name, price, stock) VALUES ($1, $2, $3) RETURNING id`
-	//err = s.db.QueryRow(SQL, productRequest.Name, productRequest.Price, productRequest.Stock).Scan(&productRequest.ID)
-	//if err != nil {
-	//	helper.WriteErrToResponseBody(writer, err)
-	//	return
-	//}
-	//
-	////Write response
-	//helper.WriteToResponseBody(writer, productRequest)
-
-	//srv := new(film_library.Server)
-
-	// Регистрируем два новых обработчика и соответствующие URL-шаблоны в
-	// маршрутизаторе servemux
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", funcName())
-
-	log.Println("Запуск веб-сервера на http://127.0.0.1:4000")
-	err := http.ListenAndServe(":4000", mux)
-	log.Fatal(err)
-
-	//go func() {
-	//	if err := srv.Run(c.Port, mux); err != nil {
-	//		fmt.Printf("error occured while running http server: %s", err.Error())
-	//	}
-	//}()
-}
-
-func funcName() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Привет из Snippetbox"))
+	c.initConfig()
+	log.Print(c)
+	dbSource := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		c.Db.Host, c.Db.Port, c.Db.User, c.Db.Password, c.Db.Dbname, c.Db.Sslmode)
+	db, err := sql.Open(c.Db.Driver, dbSource)
+	if err != nil {
+		log.Fatal("error connecting to the database: ", err)
 	}
+
+	routs := handler.NewHandler(repository.NewRepository(db))
+	addr := ":" + c.Port
+	log.Printf("Запуск веб-сервера на http://localhost%s", addr)
+
+	server := &http.Server{
+		Addr:           addr,
+		Handler:        handler.InitRoutes(routs),
+		MaxHeaderBytes: 1 << 20,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+	}
+
+	err = server.ListenAndServe()
+	log.Fatal(err)
 }
 
-func (cfg *config) getConfig() *config {
+func (cfg *config) initConfig() *config {
 
 	yamlFile, err := os.ReadFile("config/config.yml")
 	if err != nil {

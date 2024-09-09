@@ -13,7 +13,7 @@ func NewActorRepository(db *sql.DB) *ActorRepository {
 	return &ActorRepository{db: db}
 }
 
-func (r *ActorRepository) Add(actorId int, actor *model.Actor) (*model.Actor, error) {
+func (r *ActorRepository) Add(actor *model.Actor) (*model.Actor, error) {
 	return nil, nil
 }
 
