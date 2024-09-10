@@ -20,7 +20,7 @@ type config struct {
 		Port     int    `yaml:"port"`
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`
-		Dbname   string `yaml:"name"`
+		Dbname   string `yaml:"dbname"`
 		Sslmode  string `yaml:"sslmode"`
 		Driver   string `yaml:"driver"`
 	}
@@ -29,13 +29,20 @@ type config struct {
 func main() {
 	var c config
 	c.initConfig()
-	log.Print(c)
+
 	dbSource := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		c.Db.Host, c.Db.Port, c.Db.User, c.Db.Password, c.Db.Dbname, c.Db.Sslmode)
+
 	db, err := sql.Open(c.Db.Driver, dbSource)
 	if err != nil {
 		log.Fatal("error connecting to the database: ", err)
+	}
+	//init tables
+	if _, err := db.Exec(
+		"CREATE TABLE IF NOT EXISTS actors (id serial PRIMARY KEY, name varchar(255) not null, gender varchar(1) not null, date_of_birth date not null)",
+	); err != nil {
+		log.Fatal(err)
 	}
 
 	routs := handler.NewHandler(repository.NewRepository(db))
