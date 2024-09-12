@@ -1,7 +1,7 @@
 package model
 
 type Film struct {
-	Id          int    `json:"id"`
+	Id          int64  `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	ReleaseDate string `json:"releaseDate"`
@@ -9,7 +9,7 @@ type Film struct {
 }
 
 type Actor struct {
-	Id          int    `json:"id"`
+	Id          int64  `json:"id"`
 	Name        string `json:"name"`
 	Gender      string `json:"gender"`
 	DateOfBirth string `json:"date_Of_birth"`
