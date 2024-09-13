@@ -38,14 +38,17 @@ func (a ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	actorReq.Id = id
-	j, _ := json.Marshal(actorReq)
+	j, err := json.Marshal(actorReq)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(j)
+	_, err = w.Write(j)
 	if err != nil {
 		return
 	}
-
 }
 
 func (a ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -59,6 +62,21 @@ func (a ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a ActorHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	//TODO implement me
-	panic("implement me")
+	actors, err := a.repo.GetAll()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	j, err := json.Marshal(actors)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(j)
+	if err != nil {
+		return
+	}
 }

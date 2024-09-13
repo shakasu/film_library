@@ -5,6 +5,7 @@ import (
 	"film_library/model"
 	"github.com/Masterminds/squirrel"
 	"log"
+	"time"
 )
 
 type ActorRepository struct {
@@ -17,13 +18,11 @@ func NewActorRepository(db *sql.DB) *ActorRepository {
 
 func (r *ActorRepository) Add(actor *model.Actor) (int64, error) {
 
-	sql := squirrel.
+	rawInsert := squirrel.
 		Insert("actors").
 		Columns("name", "gender", "date_of_birth").
 		Values(actor.Name, actor.Gender, actor.DateOfBirth).Suffix("RETURNING id")
-	query, args, err := sql.PlaceholderFormat(squirrel.Dollar).ToSql()
-	log.Println(sql.PlaceholderFormat(squirrel.Dollar).ToSql())
-	sql.PlaceholderFormat(squirrel.Dollar).ToSql()
+	query, args, err := rawInsert.PlaceholderFormat(squirrel.Dollar).ToSql()
 	if err != nil {
 		return 0, err
 	}
@@ -44,6 +43,39 @@ func (r *ActorRepository) Delete(actorId int64) (*model.Actor, error) {
 }
 
 func (r *ActorRepository) GetAll() ([]*model.Actor, error) {
-	//TODO implement me
-	panic("implement me")
+	selectActors := squirrel.
+		Select("id", "name", "gender", "date_of_birth").
+		From("actors")
+
+	query, _, err := selectActors.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var actors []*model.Actor
+	for rows.Next() {
+		actor := &model.Actor{}
+		err := rows.Scan(&actor.Id, &actor.Name, &actor.Gender, &actor.DateOfBirth)
+		if err != nil {
+			log.Fatal(err)
+		}
+		dateOfBirthTime, err := time.Parse(time.RFC3339, actor.DateOfBirth)
+		if err != nil {
+			log.Fatal(err)
+		}
+		actor.DateOfBirth = dateOfBirthTime.Format(time.DateOnly)
+		actors = append(actors, actor)
+	}
+	if err = rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return actors, nil
 }

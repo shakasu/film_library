@@ -35,7 +35,7 @@ func InitRoutes(h *Handler) *http.ServeMux {
 	//удалить инф об актере
 	mux.HandleFunc("DELETE /actor/{id}", h.actorHandler.Delete)
 	//список актеров, для каждого есть список фильмов
-	mux.HandleFunc("GET /actor", h.actorHandler.GetAll)
+	mux.HandleFunc("GET /actors", h.actorHandler.GetAll)
 
 	//добавить инф по фильму
 	//mux.HandleFunc("POST /film", h.Put)
