@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+var (
+	actorTable         = "actors"
+	actorColumns       = []string{"name", "gender", "date_of_birth"}
+	actorColumnsWithId = []string{"id", "name", "gender", "date_of_birth"}
+)
+
 type ActorRepository struct {
 	db *sql.DB
 }
@@ -20,8 +26,8 @@ func NewActorRepository(db *sql.DB) *ActorRepository {
 
 func (r *ActorRepository) Add(actor *model.Actor) (int64, error) {
 	rawInsert := squirrel.
-		Insert("actors").
-		Columns("name", "gender", "date_of_birth").
+		Insert(actorTable).
+		Columns(actorColumns...).
 		Values(actor.Name, actor.Gender, actor.DateOfBirth).
 		Suffix("RETURNING id")
 	query, args, err := rawInsert.PlaceholderFormat(squirrel.Dollar).ToSql()
@@ -38,10 +44,10 @@ func (r *ActorRepository) Add(actor *model.Actor) (int64, error) {
 
 func (r *ActorRepository) Update(actor *model.Actor) error {
 	rawUpdate := squirrel.
-		Update("actors").
-		Set("name", actor.Name).
-		Set("gender", actor.Gender).
-		Set("date_of_birth", actor.DateOfBirth).
+		Update(actorTable).
+		Set(actorColumns[0], actor.Name).
+		Set(actorColumns[1], actor.Gender).
+		Set(actorColumns[2], actor.DateOfBirth).
 		Where(squirrel.Eq{"id": actor.Id}).
 		Suffix("RETURNING id")
 	query, args, err := rawUpdate.PlaceholderFormat(squirrel.Dollar).ToSql()
@@ -57,7 +63,7 @@ func (r *ActorRepository) Update(actor *model.Actor) error {
 }
 
 func (r *ActorRepository) Delete(actorId int64) error {
-	rawDeleteActor := squirrel.Delete("actors").
+	rawDeleteActor := squirrel.Delete(actorTable).
 		Where(squirrel.Eq{"id": actorId}).
 		Suffix("RETURNING id")
 	query, args, err := rawDeleteActor.PlaceholderFormat(squirrel.Dollar).ToSql()
@@ -74,8 +80,8 @@ func (r *ActorRepository) Delete(actorId int64) error {
 
 func (r *ActorRepository) GetAll() ([]*model.Actor, error) {
 	selectActors := squirrel.
-		Select("id", "name", "gender", "date_of_birth").
-		From("actors")
+		Select(actorColumnsWithId...).
+		From(actorTable)
 
 	query, _, err := selectActors.ToSql()
 	if err != nil {
