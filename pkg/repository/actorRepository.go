@@ -2,7 +2,9 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"film_library/model"
+	"fmt"
 	"github.com/Masterminds/squirrel"
 	"log"
 	"time"
@@ -17,11 +19,11 @@ func NewActorRepository(db *sql.DB) *ActorRepository {
 }
 
 func (r *ActorRepository) Add(actor *model.Actor) (int64, error) {
-
 	rawInsert := squirrel.
 		Insert("actors").
 		Columns("name", "gender", "date_of_birth").
-		Values(actor.Name, actor.Gender, actor.DateOfBirth).Suffix("RETURNING id")
+		Values(actor.Name, actor.Gender, actor.DateOfBirth).
+		Suffix("RETURNING id")
 	query, args, err := rawInsert.PlaceholderFormat(squirrel.Dollar).ToSql()
 	if err != nil {
 		return 0, err
@@ -34,20 +36,38 @@ func (r *ActorRepository) Add(actor *model.Actor) (int64, error) {
 	return id, nil
 }
 
-func (r *ActorRepository) Update(actorId int64, actor *model.Actor) (*model.Actor, error) {
-	return nil, nil
+func (r *ActorRepository) Update(actor *model.Actor) error {
+	rawUpdate := squirrel.
+		Update("actors").
+		Set("name", actor.Name).
+		Set("gender", actor.Gender).
+		Set("date_of_birth", actor.DateOfBirth).
+		Where(squirrel.Eq{"id": actor.Id}).
+		Suffix("RETURNING id")
+	query, args, err := rawUpdate.PlaceholderFormat(squirrel.Dollar).ToSql()
+	if err != nil {
+		return err
+	}
+	var idDeleted int64
+	err = r.db.QueryRow(query, args...).Scan(&idDeleted)
+	if err != nil {
+		return errors.New(fmt.Sprintf("Actor with id = %d not exist", actor.Id))
+	}
+	return nil
 }
 
 func (r *ActorRepository) Delete(actorId int64) error {
 	rawDeleteActor := squirrel.Delete("actors").
-		Where(squirrel.Eq{"id": actorId})
+		Where(squirrel.Eq{"id": actorId}).
+		Suffix("RETURNING id")
 	query, args, err := rawDeleteActor.PlaceholderFormat(squirrel.Dollar).ToSql()
 	if err != nil {
 		return err
 	}
-	_, err = r.db.Query(query, args...)
+	var idDeleted int64
+	err = r.db.QueryRow(query, args...).Scan(&idDeleted)
 	if err != nil {
-		return err
+		return errors.New(fmt.Sprintf("Actor with id = %d not exist", actorId))
 	}
 	return nil
 }

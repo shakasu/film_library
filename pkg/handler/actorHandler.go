@@ -48,13 +48,50 @@ func (a ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(j)
 	if err != nil {
-		return
+		log.Print(err.Error())
 	}
 }
 
 func (a ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
-	//TODO implement me
-	panic("implement me")
+	var actorReq model.Actor
+
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = decodeJSONBody(w, r, &actorReq)
+	if err != nil {
+		var mr *malformedRequest
+		if errors.As(err, &mr) {
+			http.Error(w, mr.msg, mr.status)
+		} else {
+			log.Print(err.Error())
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	actorReq.Id = id
+
+	err = a.repo.Update(&actorReq)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	actorReq.Id = id
+	j, err := json.Marshal(actorReq)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(j)
+	if err != nil {
+		return
+	}
 }
 
 func (a ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -68,12 +105,10 @@ func (a ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.WriteHeader(http.StatusOK)
-
 }
 
-func (a ActorHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+func (a ActorHandler) GetAll(w http.ResponseWriter, _ *http.Request) {
 	actors, err := a.repo.GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -89,6 +124,6 @@ func (a ActorHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(j)
 	if err != nil {
-		return
+		log.Print(err.Error())
 	}
 }
