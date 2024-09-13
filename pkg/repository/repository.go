@@ -16,6 +16,6 @@ func NewRepository(db *sql.DB) *Repository {
 type Actor interface {
 	Add(actor *model.Actor) (int64, error)
 	Update(actorId int64, actor *model.Actor) (*model.Actor, error)
-	Delete(actorId int64) (*model.Actor, error)
+	Delete(actorId int64) error
 	GetAll() ([]*model.Actor, error)
 }

@@ -7,6 +7,7 @@ import (
 	"film_library/pkg/repository"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type ActorHandler struct {
@@ -57,8 +58,19 @@ func (a ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	//TODO implement me
-	panic("implement me")
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = a.repo.Delete(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
 }
 
 func (a ActorHandler) GetAll(w http.ResponseWriter, r *http.Request) {

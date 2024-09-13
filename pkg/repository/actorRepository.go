@@ -38,8 +38,18 @@ func (r *ActorRepository) Update(actorId int64, actor *model.Actor) (*model.Acto
 	return nil, nil
 }
 
-func (r *ActorRepository) Delete(actorId int64) (*model.Actor, error) {
-	return nil, nil
+func (r *ActorRepository) Delete(actorId int64) error {
+	rawDeleteActor := squirrel.Delete("actors").
+		Where(squirrel.Eq{"id": actorId})
+	query, args, err := rawDeleteActor.PlaceholderFormat(squirrel.Dollar).ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = r.db.Query(query, args...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *ActorRepository) GetAll() ([]*model.Actor, error) {
@@ -57,7 +67,12 @@ func (r *ActorRepository) GetAll() ([]*model.Actor, error) {
 		return nil, err
 	}
 
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(rows)
 
 	var actors []*model.Actor
 	for rows.Next() {
