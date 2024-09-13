@@ -23,11 +23,6 @@ type actorHandler interface {
 func InitRoutes(h *Handler) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	//delete
-	mux.HandleFunc("GET /", func(writer http.ResponseWriter, request *http.Request) {
-		writer.Write([]byte("home"))
-	})
-
 	//добавить актера (имя пол дата рождения)
 	mux.HandleFunc("POST /actor", h.actorHandler.Add)
 	//изменить информациою об актере
