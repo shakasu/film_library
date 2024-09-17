@@ -1,10 +1,20 @@
-port: "8080"
+port: 8080
 
 db:
   host: "localhost"
-  port: 32768
+  port: 5432
   user: "postgres"
   password: "postgres"
   dbname: "postgres"
   sslmode: "disable"
   driver: "postgres"
+
+
+#PORT=8080
+#DB.HOST=localhost
+#DB.PORT: 5432
+#DB.USER=postgres
+#DB.PASSWORD=postgres
+#DB.DBNAME=postgres
+#DB.SSLMODE=disable
+#DB.DRIVER=postgres
