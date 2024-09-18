@@ -2,10 +2,9 @@ FROM golang:latest
 
 RUN go version
 
-COPY . /avitoTech/
-WORKDIR /avitoTech/
+COPY . /film_library/
+WORKDIR /film_library/
 
-# build go app
 RUN go mod download
 RUN GOOS=linux go build -o app ./cmd/main.go
 
