@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+  go-app:
+    container_name: go-app
+    build:
+      dockerfile: Dockerfile
+    environment:
+      DB_DRIVER: "postgres"
+      DB_SOURCE: "host=go_db port=5432 user=postgres_user password=postgres_password dbname=postgres_db sslmode=disable"
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - go_db
+  go_db:
+    container_name: go_db
+    image: postgres:12
+    environment:
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_USER: postgres_user
+      POSTGRES_DB: postgres_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata: { }
