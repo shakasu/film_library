@@ -6,16 +6,20 @@ import (
 )
 
 type Repository struct {
-	Actor
+	ActorRepo CrudRepository[model.Actor]
+	FilmRepo  CrudRepository[model.Film]
 }
 
 func NewRepository(db *sql.DB) *Repository {
-	return &Repository{Actor: NewActorRepository(db)}
+	return &Repository{
+		ActorRepo: NewActorRepository(db),
+		FilmRepo:  NewFilmRepository(db),
+	}
 }
 
-type Actor interface {
-	Add(actor *model.Actor) (int64, error)
-	Update(actor *model.Actor) error
-	Delete(actorId int64) error
-	GetAll() ([]*model.Actor, error)
+type CrudRepository[T any] interface {
+	Add(*T) (int64, error)
+	Update(*T) error
+	Delete(int64) error
+	GetAll() ([]*T, error)
 }

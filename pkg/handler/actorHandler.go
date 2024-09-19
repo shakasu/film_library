@@ -33,7 +33,7 @@ func (a ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := a.repo.Add(&actorReq)
+	id, err := a.repo.ActorRepo.Add(&actorReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -75,7 +75,7 @@ func (a ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	actorReq.Id = id
 
-	err = a.repo.Update(&actorReq)
+	err = a.repo.ActorRepo.Update(&actorReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -100,7 +100,7 @@ func (a ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = a.repo.Delete(id)
+	err = a.repo.ActorRepo.Delete(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -109,7 +109,7 @@ func (a ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a ActorHandler) GetAll(w http.ResponseWriter, _ *http.Request) {
-	actors, err := a.repo.GetAll()
+	actors, err := a.repo.ActorRepo.GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
