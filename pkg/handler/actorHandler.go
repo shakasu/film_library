@@ -19,7 +19,7 @@ func NewActorHandler(repo *repository.Repository) *ActorHandler {
 	return &ActorHandler{repo: repo}
 }
 
-func (a ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
+func (handler ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 	var actorReq model.Actor
 
 	err := utils.DecodeJSONBody(w, r, &actorReq)
@@ -34,7 +34,7 @@ func (a ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := a.repo.ActorRepo.Add(&actorReq)
+	id, err := handler.repo.ActorRepo.Add(&actorReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -53,7 +53,7 @@ func (a ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (handler ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var actorReq model.Actor
 
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
@@ -76,7 +76,7 @@ func (a ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	actorReq.Id = id
 
-	err = a.repo.ActorRepo.Update(&actorReq)
+	err = handler.repo.ActorRepo.Update(&actorReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -95,13 +95,13 @@ func (a ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (handler ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = a.repo.ActorRepo.Delete(id)
+	err = handler.repo.ActorRepo.Delete(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -109,8 +109,8 @@ func (a ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (a ActorHandler) GetAll(w http.ResponseWriter, _ *http.Request) {
-	actors, err := a.repo.ActorRepo.GetAll()
+func (handler ActorHandler) GetAll(w http.ResponseWriter, _ *http.Request) {
+	actors, err := handler.repo.ActorRepo.GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -4,7 +4,7 @@ type Film struct {
 	Id          int64   `json:"id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
-	ReleaseDate string  `json:"releaseDate"`
+	ReleaseDate string  `json:"release_date"`
 	Rating      int     `json:"rating"`
 	Actors      []Actor `json:"actors"`
 }

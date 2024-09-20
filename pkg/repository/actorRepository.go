@@ -63,10 +63,10 @@ func (r *ActorRepository) Update(actor *model.Actor) error {
 }
 
 func (r *ActorRepository) Delete(actorId int64) error {
-	rawDeleteActor := squirrel.Delete(actorTable).
+	rawDelete := squirrel.Delete(actorTable).
 		Where(squirrel.Eq{"id": actorId}).
 		Suffix("RETURNING id")
-	query, args, err := rawDeleteActor.PlaceholderFormat(squirrel.Dollar).ToSql()
+	query, args, err := rawDelete.PlaceholderFormat(squirrel.Dollar).ToSql()
 	if err != nil {
 		return err
 	}
