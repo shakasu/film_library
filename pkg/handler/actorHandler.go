@@ -5,6 +5,7 @@ import (
 	"errors"
 	"film_library/model"
 	"film_library/pkg/repository"
+	"film_library/utils"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,11 +22,11 @@ func NewActorHandler(repo *repository.Repository) *ActorHandler {
 func (a ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 	var actorReq model.Actor
 
-	err := decodeJSONBody(w, r, &actorReq)
+	err := utils.DecodeJSONBody(w, r, &actorReq)
 	if err != nil {
-		var mr *malformedRequest
+		var mr *utils.MalformedRequest
 		if errors.As(err, &mr) {
-			http.Error(w, mr.msg, mr.status)
+			http.Error(w, mr.Msg, mr.Status)
 		} else {
 			log.Print(err.Error())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -61,11 +62,11 @@ func (a ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = decodeJSONBody(w, r, &actorReq)
+	err = utils.DecodeJSONBody(w, r, &actorReq)
 	if err != nil {
-		var mr *malformedRequest
+		var mr *utils.MalformedRequest
 		if errors.As(err, &mr) {
-			http.Error(w, mr.msg, mr.status)
+			http.Error(w, mr.Msg, mr.Status)
 		} else {
 			log.Print(err.Error())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
