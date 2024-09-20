@@ -14,5 +14,5 @@ type Actor struct {
 	Name        string `json:"name"`
 	Gender      string `json:"gender"`
 	DateOfBirth string `json:"date_Of_birth"`
-	//Films       []Film `json:"films"`
+	Films       []Film `json:"films"`
 }
