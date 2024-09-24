@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     environment:
       DB_DRIVER: "postgres"
-      DB_SOURCE: "host=go_db port=5432 user=admin password=admin dbname=postgres_db sslmode=disable"
+      DB_SOURCE: "host=go_db port=5432 user=postgres_user password=postgres_password dbname=postgres_db sslmode=disable"
       PORT: 8080
     ports:
       - "8080:8080"

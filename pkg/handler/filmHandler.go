@@ -5,7 +5,6 @@ import (
 	"errors"
 	"film_library/model"
 	"film_library/pkg/repository"
-	"film_library/utils"
 	"log"
 	"net/http"
 	"strconv"
@@ -20,11 +19,14 @@ func NewFilmHandler(repo *repository.Repository) *FilmHandler {
 }
 
 func (handler FilmHandler) Add(w http.ResponseWriter, r *http.Request) {
+	if !authWriter(w, r, handler.repo) {
+		return
+	}
 	var filmReq model.Film
 
-	err := utils.DecodeJSONBody(w, r, &filmReq)
+	err := decodeJSONBody(w, r, &filmReq)
 	if err != nil {
-		var mr *utils.MalformedRequest
+		var mr *malformedRequest
 		if errors.As(err, &mr) {
 			http.Error(w, mr.Msg, mr.Status)
 		} else {
@@ -54,6 +56,9 @@ func (handler FilmHandler) Add(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler FilmHandler) Update(w http.ResponseWriter, r *http.Request) {
+	if !authWriter(w, r, handler.repo) {
+		return
+	}
 	var filmReq model.Film
 
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
@@ -62,9 +67,9 @@ func (handler FilmHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = utils.DecodeJSONBody(w, r, &filmReq)
+	err = decodeJSONBody(w, r, &filmReq)
 	if err != nil {
-		var mr *utils.MalformedRequest
+		var mr *malformedRequest
 		if errors.As(err, &mr) {
 			http.Error(w, mr.Msg, mr.Status)
 		} else {
@@ -96,6 +101,9 @@ func (handler FilmHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler FilmHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	if !authWriter(w, r, handler.repo) {
+		return
+	}
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -109,7 +117,10 @@ func (handler FilmHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (handler FilmHandler) GetAll(w http.ResponseWriter, _ *http.Request) {
+func (handler FilmHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	if !authReader(w, r, handler.repo) {
+		return
+	}
 	actors, err := handler.repo.FilmRepo.GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

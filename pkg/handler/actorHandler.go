@@ -5,7 +5,7 @@ import (
 	"errors"
 	"film_library/model"
 	"film_library/pkg/repository"
-	"film_library/utils"
+
 	"log"
 	"net/http"
 	"strconv"
@@ -20,11 +20,14 @@ func NewActorHandler(repo *repository.Repository) *ActorHandler {
 }
 
 func (handler ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
+	if !authWriter(w, r, handler.repo) {
+		return
+	}
 	var actorReq model.Actor
 
-	err := utils.DecodeJSONBody(w, r, &actorReq)
+	err := decodeJSONBody(w, r, &actorReq)
 	if err != nil {
-		var mr *utils.MalformedRequest
+		var mr *malformedRequest
 		if errors.As(err, &mr) {
 			http.Error(w, mr.Msg, mr.Status)
 		} else {
@@ -54,6 +57,9 @@ func (handler ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
+	if !authWriter(w, r, handler.repo) {
+		return
+	}
 	var actorReq model.Actor
 
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
@@ -62,9 +68,9 @@ func (handler ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = utils.DecodeJSONBody(w, r, &actorReq)
+	err = decodeJSONBody(w, r, &actorReq)
 	if err != nil {
-		var mr *utils.MalformedRequest
+		var mr *malformedRequest
 		if errors.As(err, &mr) {
 			http.Error(w, mr.Msg, mr.Status)
 		} else {
@@ -96,6 +102,9 @@ func (handler ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	if !authWriter(w, r, handler.repo) {
+		return
+	}
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -109,7 +118,10 @@ func (handler ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (handler ActorHandler) GetAll(w http.ResponseWriter, _ *http.Request) {
+func (handler ActorHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	if !authReader(w, r, handler.repo) {
+		return
+	}
 	actors, err := handler.repo.ActorRepo.GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

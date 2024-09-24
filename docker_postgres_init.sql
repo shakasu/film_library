@@ -1,18 +1,22 @@
-CREATE ROLE read_only_access;
+CREATE TABLE IF NOT EXISTS accounts
+(
+    id        SERIAL,
+    login     VARCHAR(10),
+    password  VARCHAR(100),
+    user_role varchar(6)
+);
 
-GRANT CONNECT ON DATABASE postgres
-    TO read_only_access;
+CREATE EXTENSION pgcrypto;
 
-GRANT USAGE ON SCHEMA public TO read_only_access;
+INSERT INTO accounts (login, password, user_role)
+VALUES ('admin',
+        crypt('admin', gen_salt('md5')),
+        'ADMIN');
 
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO read_only_access;
-
-CREATE USER read_user WITH
-    PASSWORD 'read_user';
-
-GRANT read_only_access TO read_user;
-
-CREATE USER admin WITH PASSWORD 'admin' SUPERUSER;
+INSERT INTO accounts (login, password, user_role)
+VALUES ('reader',
+        crypt('reader', gen_salt('md5')),
+        'READER');
 
 CREATE TABLE IF NOT EXISTS actors
 (

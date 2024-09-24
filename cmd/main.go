@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	config := initial.Cfg()
+	config, err := initial.Cfg()
 
 	db, err := initial.Db(config.DbDriver, config.DbSource)
 	if err != nil {

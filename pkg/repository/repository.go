@@ -8,12 +8,14 @@ import (
 type Repository struct {
 	ActorRepo CrudRepository[model.Actor]
 	FilmRepo  CrudRepository[model.Film]
+	AuthRepo  *AuthRepository
 }
 
 func NewRepository(db *sql.DB) *Repository {
 	return &Repository{
 		ActorRepo: NewActorRepository(db),
 		FilmRepo:  NewFilmRepository(db),
+		AuthRepo:  NewAuthRepository(db),
 	}
 }
 
