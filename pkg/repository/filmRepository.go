@@ -16,70 +16,89 @@ var (
 	filmColumnsWithId = []string{"id", "name", "description", "release_date", "rating"}
 )
 
-type FilmRepository struct {
+type FilmRepo struct {
 	db *sql.DB
 }
 
-func NewFilmRepository(db *sql.DB) *FilmRepository {
-	return &FilmRepository{db: db}
+func NewFilmRepository(db *sql.DB) *FilmRepo {
+	return &FilmRepo{db: db}
 }
 
-func (r *FilmRepository) Add(film *model.Film) (int64, error) {
-	rawInsert := squirrel.
+func (r *FilmRepo) Add(film *model.FilmDto) (*model.Film, error) {
+	rawFilmInsert := squirrel.
 		Insert(filmTable).
 		Columns(filmColumns...).
 		Values(film.Name, film.Description, film.ReleaseDate, film.Rating).
 		Suffix("RETURNING id")
-	query, args, err := rawInsert.PlaceholderFormat(squirrel.Dollar).ToSql()
+	query, args, err := rawFilmInsert.PlaceholderFormat(squirrel.Dollar).ToSql()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	var id int64
 	err = r.db.QueryRow(query, args...).Scan(&id)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return id, nil
+
+	return r.handleActors(film, err, id)
 }
 
-func (r *FilmRepository) Update(film *model.Film) error {
+func (r *FilmRepo) Update(film *model.FilmDto, id int64) (*model.Film, error) {
+	exists, err := r.isFilmExist(id)
+	if !exists || err != nil {
+		return nil, errors.New(fmt.Sprintf("Film with id = %d not exist", id))
+	}
+	err = r.deleteActorsLink(id)
+	if err != nil {
+		return nil, err
+	}
 	rawUpdate := squirrel.
 		Update(filmTable).
 		Set(filmColumns[0], film.Name).
 		Set(filmColumns[1], film.Description).
 		Set(filmColumns[2], film.ReleaseDate).
 		Set(filmColumns[3], film.Rating).
-		Where(squirrel.Eq{"id": film.Id}).
+		Where(squirrel.Eq{"id": id}).
 		Suffix("RETURNING id")
 	query, args, err := rawUpdate.PlaceholderFormat(squirrel.Dollar).ToSql()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	var idDeleted int64
-	err = r.db.QueryRow(query, args...).Scan(&idDeleted)
+	var idUpdated int64
+	err = r.db.QueryRow(query, args...).Scan(&idUpdated)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Film with id = %d not exist", film.Id))
+		return nil, errors.New(fmt.Sprintf("Film with id = %d not exist", id))
 	}
-	return nil
+
+	return r.handleActors(film, err, id)
 }
 
-func (r *FilmRepository) Delete(filmId int64) error {
+func (r *FilmRepo) Delete(id int64) error {
+	exists, err := r.isFilmExist(id)
+	if !exists || err != nil {
+		return errors.New(fmt.Sprintf("Film with id = %d not exist", id))
+	}
+	err = r.deleteActorsLink(id)
+	if err != nil {
+		return err
+	}
 	rawDelete := squirrel.Delete(filmTable).
-		Where(squirrel.Eq{"id": filmId}).
+		Where(squirrel.Eq{"id": id}).
 		Suffix("RETURNING id")
 	query, args, err := rawDelete.PlaceholderFormat(squirrel.Dollar).ToSql()
 	if err != nil {
 		return err
 	}
+
 	var idDeleted int64
 	err = r.db.QueryRow(query, args...).Scan(&idDeleted)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Actor with id = %d not exist", filmId))
+		return errors.New(fmt.Sprintf("Film with id = %d not exist", id))
 	}
 	return nil
 }
 
-func (r *FilmRepository) GetAll() ([]*model.Film, error) {
+func (r *FilmRepo) GetAll() ([]*model.Film, error) {
 	selectFilms := squirrel.
 		Select(filmColumnsWithId...).
 		From(filmTable)
@@ -106,18 +125,185 @@ func (r *FilmRepository) GetAll() ([]*model.Film, error) {
 		film := &model.Film{}
 		err := rows.Scan(&film.Id, &film.Name, &film.Description, &film.ReleaseDate, &film.Rating)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		releaseDateTime, err := time.Parse(time.RFC3339, film.ReleaseDate)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		film.ReleaseDate = releaseDateTime.Format(time.DateOnly)
+
+		linkedActorIds, err := r.findLinkedActorIds(film.Id)
+		if err != nil {
+			return nil, err
+		}
+		linkedActors, err := r.findActorsByIds(linkedActorIds)
+		film.Actors = linkedActors
+
 		films = append(films, film)
+
 	}
 	if err = rows.Err(); err != nil {
 		log.Fatal(err)
 	}
 
 	return films, nil
+
+}
+
+func (r *FilmRepo) findActorsByIds(actorIds []int64) ([]*model.Actor, error) {
+	selectActors := squirrel.
+		Select("*").
+		From(actorTable).
+		Where(squirrel.Eq{"id": actorIds})
+
+	query, args, err := selectActors.PlaceholderFormat(squirrel.Dollar).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(rows)
+
+	var actors []*model.Actor
+	for rows.Next() {
+		actor := &model.Actor{}
+		err := rows.Scan(&actor.Id, &actor.Name, &actor.Gender, &actor.DateOfBirth)
+		if err != nil {
+			return nil, err
+		}
+		dateOfBirthTime, err := time.Parse(time.RFC3339, actor.DateOfBirth)
+		if err != nil {
+			return nil, err
+		}
+		actor.DateOfBirth = dateOfBirthTime.Format(time.DateOnly)
+		actors = append(actors, actor)
+	}
+	if err = rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return actors, nil
+}
+
+func (r *FilmRepo) linkActors(filmId int64, actorIds []int64) error {
+	rawLinkInsert := squirrel.
+		Insert("actor_film").
+		Columns("actor_id", "film_id")
+	for _, actorId := range actorIds {
+		rawLinkInsert = rawLinkInsert.Values(actorId, filmId)
+	}
+
+	query, args, err := rawLinkInsert.PlaceholderFormat(squirrel.Dollar).ToSql()
+	if err != nil {
+		return err
+	}
+
+	return r.db.QueryRow(query, args...).Err()
+}
+
+func (r *FilmRepo) deleteActorsLink(id int64) error {
+	if r.isLinkExist(id) {
+		rawLinkDelete := squirrel.
+			Delete("actor_film").
+			Where(squirrel.Eq{"film_id": id}).
+			Suffix("RETURNING id")
+
+		query, args, err := rawLinkDelete.PlaceholderFormat(squirrel.Dollar).ToSql()
+		if err != nil {
+			return err
+		}
+
+		var idDeleted int64
+		err = r.db.QueryRow(query, args...).Scan(&idDeleted)
+		if err != nil {
+			return errors.New(fmt.Sprintf("Film with id = %d not exist", idDeleted))
+		}
+	}
+
+	return nil
+}
+
+func (r *FilmRepo) findLinkedActorIds(filmId int64) ([]int64, error) {
+	rawLinkSelect := squirrel.
+		Select("actor_id").
+		From("actor_film").
+		Where(squirrel.Eq{"film_id": filmId})
+
+	query, args, err := rawLinkSelect.PlaceholderFormat(squirrel.Dollar).ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var ids []int64
+	rows, err := r.db.Query(query, args...)
+	for rows.Next() {
+		var id int64
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}
+
+func (r *FilmRepo) handleActors(film *model.FilmDto, err error, id int64) (*model.Film, error) {
+	var actors []*model.Actor
+	if film.ActorIds != nil {
+		actors, err = r.findActorsByIds(film.ActorIds)
+		if err != nil {
+			return nil, err
+		}
+
+		err = r.linkActors(id, film.ActorIds)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &model.Film{
+		Id:          id,
+		Name:        film.Name,
+		Description: film.Description,
+		ReleaseDate: film.ReleaseDate,
+		Rating:      film.Rating,
+		Actors:      actors,
+	}, nil
+}
+
+func (r *FilmRepo) isFilmExist(id int64) (bool, error) {
+	rawSelect := squirrel.
+		Select("1").
+		Prefix("SELECT EXISTS (").
+		From("films").
+		Where(squirrel.Eq{"id": id}).
+		Suffix(")")
+	query, args, err := rawSelect.PlaceholderFormat(squirrel.Dollar).ToSql()
+	var exists bool
+	err = r.db.QueryRow(query, args...).Scan(&exists)
+	return exists, err
+}
+
+func (r *FilmRepo) isLinkExist(id int64) bool {
+	rawSelect := squirrel.
+		Select("1").
+		Prefix("SELECT EXISTS (").
+		From("actor_film").
+		Where(squirrel.Eq{"film_id": id}).
+		Suffix(")")
+	query, args, _ := rawSelect.PlaceholderFormat(squirrel.Dollar).ToSql()
+	var exists bool
+	_ = r.db.QueryRow(query, args...).Scan(&exists)
+	return exists
 }

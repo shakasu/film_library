@@ -22,7 +22,7 @@ func (handler FilmHandler) Add(w http.ResponseWriter, r *http.Request) {
 	if !authWriter(w, r, handler.repo) {
 		return
 	}
-	var filmReq model.Film
+	var filmReq model.FilmDto
 
 	err := decodeJSONBody(w, r, &filmReq)
 	if err != nil {
@@ -36,13 +36,13 @@ func (handler FilmHandler) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := handler.repo.FilmRepo.Add(&filmReq)
+	filmResp, err := handler.repo.FilmRepo.Add(&filmReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	filmReq.Id = id
-	j, err := json.Marshal(filmReq)
+
+	j, err := json.Marshal(filmResp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -59,7 +59,7 @@ func (handler FilmHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if !authWriter(w, r, handler.repo) {
 		return
 	}
-	var filmReq model.Film
+	var filmReq model.FilmDto
 
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
@@ -79,15 +79,14 @@ func (handler FilmHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filmReq.Id = id
+	filmResp, err := handler.repo.FilmRepo.Update(&filmReq, id)
 
-	err = handler.repo.FilmRepo.Update(&filmReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	filmReq.Id = id
-	j, err := json.Marshal(filmReq)
+
+	j, err := json.Marshal(filmResp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -96,7 +95,7 @@ func (handler FilmHandler) Update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(j)
 	if err != nil {
-		return
+		log.Print(err.Error())
 	}
 }
 

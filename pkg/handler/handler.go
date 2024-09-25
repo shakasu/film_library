@@ -16,14 +16,14 @@ type malformedRequest struct {
 }
 
 type Handler struct {
-	actorHandler crudHandler
-	filmHandler  crudHandler
+	//actorHandler crudHandler
+	filmHandler crudHandler
 }
 
 func NewHandler(repo *repository.Repository) *Handler {
 	return &Handler{
-		actorHandler: NewActorHandler(repo),
-		filmHandler:  NewFilmHandler(repo),
+		//actorHandler: NewActorHandler(repo),
+		filmHandler: NewFilmHandler(repo),
 	}
 }
 
@@ -37,10 +37,10 @@ type crudHandler interface {
 func InitRoutes(h *Handler) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /actor", h.actorHandler.Add)
-	mux.HandleFunc("PUT /actor/{id}", h.actorHandler.Update)
-	mux.HandleFunc("DELETE /actor/{id}", h.actorHandler.Delete)
-	mux.HandleFunc("GET /actors", h.actorHandler.GetAll)
+	//mux.HandleFunc("POST /actor", h.actorHandler.Add)
+	//mux.HandleFunc("PUT /actor/{id}", h.actorHandler.Update)
+	//mux.HandleFunc("DELETE /actor/{id}", h.actorHandler.Delete)
+	//mux.HandleFunc("GET /actors", h.actorHandler.GetAll)
 
 	//добавить инф по фильму
 	mux.HandleFunc("POST /film", h.filmHandler.Add)
