@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -16,14 +17,14 @@ type malformedRequest struct {
 }
 
 type Handler struct {
-	//actorHandler crudHandler
-	filmHandler crudHandler
+	actorHandler crudHandler
+	filmHandler  crudHandler
 }
 
 func NewHandler(repo *repository.Repository) *Handler {
 	return &Handler{
-		//actorHandler: NewActorHandler(repo),
-		filmHandler: NewFilmHandler(repo),
+		actorHandler: NewActorHandler(repo),
+		filmHandler:  NewFilmHandler(repo),
 	}
 }
 
@@ -37,23 +38,18 @@ type crudHandler interface {
 func InitRoutes(h *Handler) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	//mux.HandleFunc("POST /actor", h.actorHandler.Add)
-	//mux.HandleFunc("PUT /actor/{id}", h.actorHandler.Update)
-	//mux.HandleFunc("DELETE /actor/{id}", h.actorHandler.Delete)
-	//mux.HandleFunc("GET /actors", h.actorHandler.GetAll)
+	mux.HandleFunc("POST /actor", h.actorHandler.Add)
+	mux.HandleFunc("PUT /actor/{id}", h.actorHandler.Update)
+	mux.HandleFunc("DELETE /actor/{id}", h.actorHandler.Delete)
+	mux.HandleFunc("GET /actors", h.actorHandler.GetAll)
 
-	//добавить инф по фильму
 	mux.HandleFunc("POST /film", h.filmHandler.Add)
-	////изм инф по фильму
 	mux.HandleFunc("PUT /film/{id}", h.filmHandler.Update)
-	////удл инф по фильму
 	mux.HandleFunc("DELETE /film/{id}", h.filmHandler.Delete)
-	////список фильмов с возм сортировки по назв рейтингу и дате выпуска (по рейтинг по убыванию дефорт)
 	mux.HandleFunc("GET /films", h.filmHandler.GetAll)
+
 	//// поиск фильма по фрагменту названия, по фрагменту имени актера
 	//mux.HandleFunc("GET /film", h.filmHandler.GetByFilter)
-
-	// апи закрыт авторизацией, две роли : одна на чтение, другая на все (соответвие польз и адм задается через бд)
 	return mux
 }
 
@@ -148,4 +144,13 @@ func authReader(w http.ResponseWriter, r *http.Request, repo *repository.Reposit
 		}
 	}
 	return true
+}
+
+func getIdFromPath(w http.ResponseWriter, r *http.Request) (int64, error) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return 0, nil
+	}
+	return id, err
 }

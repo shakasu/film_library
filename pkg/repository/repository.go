@@ -13,9 +13,9 @@ type Repository struct {
 
 func NewRepository(db *sql.DB) *Repository {
 	return &Repository{
-		//ActorRepo: NewActorRepository(db),
-		FilmRepo: NewFilmRepository(db),
-		AuthRepo: NewAuthRepository(db),
+		ActorRepo: NewActorRepository(db),
+		FilmRepo:  NewFilmRepository(db),
+		AuthRepo:  NewAuthRepository(db),
 	}
 }
 

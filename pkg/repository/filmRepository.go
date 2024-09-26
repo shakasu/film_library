@@ -195,22 +195,6 @@ func (r *FilmRepo) findActorsByIds(actorIds []int64) ([]*model.Actor, error) {
 	return actors, nil
 }
 
-func (r *FilmRepo) linkActors(filmId int64, actorIds []int64) error {
-	rawLinkInsert := squirrel.
-		Insert("actor_film").
-		Columns("actor_id", "film_id")
-	for _, actorId := range actorIds {
-		rawLinkInsert = rawLinkInsert.Values(actorId, filmId)
-	}
-
-	query, args, err := rawLinkInsert.PlaceholderFormat(squirrel.Dollar).ToSql()
-	if err != nil {
-		return err
-	}
-
-	return r.db.QueryRow(query, args...).Err()
-}
-
 func (r *FilmRepo) deleteActorsLink(id int64) error {
 	if r.isLinkExist(id) {
 		rawLinkDelete := squirrel.
@@ -226,7 +210,7 @@ func (r *FilmRepo) deleteActorsLink(id int64) error {
 		var idDeleted int64
 		err = r.db.QueryRow(query, args...).Scan(&idDeleted)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Film with id = %d not exist", idDeleted))
+			return errors.New(fmt.Sprintf("Actor-film link with id = %d not exist", idDeleted))
 		}
 	}
 
@@ -266,7 +250,19 @@ func (r *FilmRepo) handleActors(film *model.FilmDto, err error, id int64) (*mode
 			return nil, err
 		}
 
-		err = r.linkActors(id, film.ActorIds)
+		rawLinkInsert := squirrel.
+			Insert("actor_film").
+			Columns("actor_id", "film_id")
+		for _, actorId := range film.ActorIds {
+			rawLinkInsert = rawLinkInsert.Values(actorId, id)
+		}
+
+		query, args, err := rawLinkInsert.PlaceholderFormat(squirrel.Dollar).ToSql()
+		if err != nil {
+			return nil, err
+		}
+
+		err = r.db.QueryRow(query, args...).Err()
 		if err != nil {
 			return nil, err
 		}

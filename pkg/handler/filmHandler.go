@@ -7,7 +7,6 @@ import (
 	"film_library/pkg/repository"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 type FilmHandler struct {
@@ -61,9 +60,8 @@ func (handler FilmHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	var filmReq model.FilmDto
 
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	id, err := getIdFromPath(w, r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -103,9 +101,8 @@ func (handler FilmHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if !authWriter(w, r, handler.repo) {
 		return
 	}
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	id, err := getIdFromPath(w, r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	err = handler.repo.FilmRepo.Delete(id)
