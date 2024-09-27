@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"film_library/model"
+	"github.com/Masterminds/squirrel"
 )
 
 type Repository struct {
@@ -24,4 +25,17 @@ type CrudRepository[T any, G any] interface {
 	Update(*T, int64) (*G, error)
 	Delete(int64) error
 	GetAll() ([]*G, error)
+}
+
+func isRecordExist(id int64, table string, db *sql.DB) (bool, error) {
+	rawSelect := squirrel.
+		Select("1").
+		Prefix("SELECT EXISTS (").
+		From(table).
+		Where(squirrel.Eq{"id": id}).
+		Suffix(")")
+	query, args, err := rawSelect.PlaceholderFormat(squirrel.Dollar).ToSql()
+	var exists bool
+	err = db.QueryRow(query, args...).Scan(&exists)
+	return exists, err
 }

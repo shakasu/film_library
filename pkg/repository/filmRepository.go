@@ -25,6 +25,13 @@ func NewFilmRepository(db *sql.DB) *FilmRepo {
 }
 
 func (r *FilmRepo) Add(film *model.FilmDto) (*model.Film, error) {
+	for _, actorId := range film.ActorIds {
+		exists, err := isRecordExist(actorId, actorTable, r.db)
+		if !exists || err != nil {
+			return nil, errors.New(fmt.Sprintf("Actor with id = %d not exist", actorId))
+		}
+	}
+
 	rawFilmInsert := squirrel.
 		Insert(filmTable).
 		Columns(filmColumns...).
@@ -44,7 +51,14 @@ func (r *FilmRepo) Add(film *model.FilmDto) (*model.Film, error) {
 }
 
 func (r *FilmRepo) Update(film *model.FilmDto, id int64) (*model.Film, error) {
-	exists, err := r.isFilmExist(id)
+	for _, actorId := range film.ActorIds {
+		exists, err := isRecordExist(actorId, actorTable, r.db)
+		if !exists || err != nil {
+			return nil, errors.New(fmt.Sprintf("Actor with id = %d not exist", actorId))
+		}
+	}
+
+	exists, err := isRecordExist(id, filmTable, r.db)
 	if !exists || err != nil {
 		return nil, errors.New(fmt.Sprintf("Film with id = %d not exist", id))
 	}
@@ -74,7 +88,7 @@ func (r *FilmRepo) Update(film *model.FilmDto, id int64) (*model.Film, error) {
 }
 
 func (r *FilmRepo) Delete(id int64) error {
-	exists, err := r.isFilmExist(id)
+	exists, err := isRecordExist(id, filmTable, r.db)
 	if !exists || err != nil {
 		return errors.New(fmt.Sprintf("Film with id = %d not exist", id))
 	}
@@ -196,7 +210,8 @@ func (r *FilmRepo) findActorsByIds(actorIds []int64) ([]*model.Actor, error) {
 }
 
 func (r *FilmRepo) deleteActorsLink(id int64) error {
-	if r.isLinkExist(id) {
+	exists, _ := isRecordExist(id, "actor_film", r.db)
+	if exists {
 		rawLinkDelete := squirrel.
 			Delete("actor_film").
 			Where(squirrel.Eq{"film_id": id}).
@@ -276,30 +291,4 @@ func (r *FilmRepo) handleActors(film *model.FilmDto, err error, id int64) (*mode
 		Rating:      film.Rating,
 		Actors:      actors,
 	}, nil
-}
-
-func (r *FilmRepo) isFilmExist(id int64) (bool, error) {
-	rawSelect := squirrel.
-		Select("1").
-		Prefix("SELECT EXISTS (").
-		From("films").
-		Where(squirrel.Eq{"id": id}).
-		Suffix(")")
-	query, args, err := rawSelect.PlaceholderFormat(squirrel.Dollar).ToSql()
-	var exists bool
-	err = r.db.QueryRow(query, args...).Scan(&exists)
-	return exists, err
-}
-
-func (r *FilmRepo) isLinkExist(id int64) bool {
-	rawSelect := squirrel.
-		Select("1").
-		Prefix("SELECT EXISTS (").
-		From("actor_film").
-		Where(squirrel.Eq{"film_id": id}).
-		Suffix(")")
-	query, args, _ := rawSelect.PlaceholderFormat(squirrel.Dollar).ToSql()
-	var exists bool
-	_ = r.db.QueryRow(query, args...).Scan(&exists)
-	return exists
 }
