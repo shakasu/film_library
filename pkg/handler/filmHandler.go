@@ -5,8 +5,10 @@ import (
 	"errors"
 	"film_library/model"
 	"film_library/pkg/repository"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type FilmHandler struct {
@@ -134,4 +136,68 @@ func (handler FilmHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err.Error())
 	}
+}
+
+func (handler FilmHandler) searchBy(w http.ResponseWriter, r *http.Request) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (handler FilmHandler) readSorted(w http.ResponseWriter, r *http.Request) {
+	if !authReader(w, r, handler.repo) {
+		return
+	}
+
+	sortBy, ascending, err := readQueryParams(w, r)
+	if err != nil {
+		return
+	}
+
+	actors, err := handler.repo.FilmRepo.ReadSorted(sortBy, ascending)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	j, err := json.Marshal(actors)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(j)
+	if err != nil {
+		log.Print(err.Error())
+	}
+
+}
+
+func readQueryParams(w http.ResponseWriter, r *http.Request) (string, bool, error) {
+	var sortBy = r.URL.Query().Get("sortBy")
+	var ascendingStr = r.URL.Query().Get("ascending")
+
+	if sortBy == "" && ascendingStr == "" {
+		return "rating", false, nil
+	}
+
+	if sortBy != "name" && sortBy != "release_date" && sortBy != "rating" {
+		msg := fmt.Sprintf(
+			"field [sortBy] = [%s] the field can only take 3 values: [name], [release_date], [rating]",
+			sortBy)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusBadRequest)
+		return "", false, errors.New(msg)
+	}
+	ascending, err := strconv.ParseBool(ascendingStr)
+	if err != nil {
+		msg := fmt.Sprintf(
+			"field [ascending] = [%t] the field can only take 2 values: [true], [false]",
+			ascending)
+		log.Println(msg)
+		http.Error(w, msg, http.StatusBadRequest)
+		return "", false, errors.New(msg)
+	}
+
+	return sortBy, ascending, err
 }

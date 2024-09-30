@@ -24,6 +24,70 @@ func NewFilmRepository(db *sql.DB) *FilmRepo {
 	return &FilmRepo{db: db}
 }
 
+func (r *FilmRepo) SearchBy(fragment string) ([]*model.Film, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (r *FilmRepo) ReadSorted(sortBy string, ascending bool) ([]*model.Film, error) {
+	var orderBy string
+	if ascending {
+		orderBy = fmt.Sprintf("%s ASC", sortBy)
+	} else {
+		orderBy = fmt.Sprintf("%s DESC", sortBy)
+	}
+	selectFilms := squirrel.
+		Select(filmColumnsWithId...).
+		From(filmTable).
+		OrderBy(orderBy)
+
+	query, _, err := selectFilms.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(rows)
+
+	var films []*model.Film
+	for rows.Next() {
+		film := &model.Film{}
+		err := rows.Scan(&film.Id, &film.Name, &film.Description, &film.ReleaseDate, &film.Rating)
+		if err != nil {
+			return nil, err
+		}
+		releaseDateTime, err := time.Parse(time.RFC3339, film.ReleaseDate)
+		if err != nil {
+			return nil, err
+		}
+		film.ReleaseDate = releaseDateTime.Format(time.DateOnly)
+
+		linkedActorIds, err := r.findLinkedActorIds(film.Id)
+		if err != nil {
+			return nil, err
+		}
+		linkedActors, err := r.findActorsByIds(linkedActorIds)
+		film.Actors = linkedActors
+
+		films = append(films, film)
+
+	}
+	if err = rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return films, nil
+}
+
 func (r *FilmRepo) Add(film *model.FilmDto) (*model.Film, error) {
 	for _, actorId := range film.ActorIds {
 		exists, err := isRecordExist(actorId, actorTable, r.db)
@@ -162,7 +226,6 @@ func (r *FilmRepo) GetAll() ([]*model.Film, error) {
 	}
 
 	return films, nil
-
 }
 
 func (r *FilmRepo) findActorsByIds(actorIds []int64) ([]*model.Actor, error) {

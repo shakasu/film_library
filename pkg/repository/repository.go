@@ -7,8 +7,8 @@ import (
 )
 
 type Repository struct {
-	ActorRepo CrudRepository[model.ActorDto, model.Actor]
-	FilmRepo  CrudRepository[model.FilmDto, model.Film]
+	ActorRepo crudRepository[model.ActorDto, model.Actor]
+	FilmRepo  crudAndReaderRepository[model.FilmDto, model.Film]
 	AuthRepo  *AuthRepository
 }
 
@@ -20,11 +20,20 @@ func NewRepository(db *sql.DB) *Repository {
 	}
 }
 
-type CrudRepository[T any, G any] interface {
+type crudRepository[T any, G any] interface {
 	Add(*T) (*G, error)
 	Update(*T, int64) (*G, error)
 	Delete(int64) error
 	GetAll() ([]*G, error)
+}
+
+type readerRepository[T any] interface {
+	SearchBy(fragment string) ([]*T, error)
+	ReadSorted(sortBy string, ascending bool) ([]*T, error)
+}
+type crudAndReaderRepository[T any, G any] interface {
+	crudRepository[T, G]
+	readerRepository[G]
 }
 
 func isRecordExist(id int64, table string, db *sql.DB) (bool, error) {

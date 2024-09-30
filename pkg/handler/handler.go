@@ -18,7 +18,7 @@ type malformedRequest struct {
 
 type Handler struct {
 	actorHandler crudHandler
-	filmHandler  crudHandler
+	filmHandler  crudAndReaderHandler
 }
 
 func NewHandler(repo *repository.Repository) *Handler {
@@ -35,6 +35,16 @@ type crudHandler interface {
 	GetAll(w http.ResponseWriter, r *http.Request)
 }
 
+type readHandler interface {
+	searchBy(w http.ResponseWriter, r *http.Request)
+	readSorted(w http.ResponseWriter, r *http.Request)
+}
+
+type crudAndReaderHandler interface {
+	crudHandler
+	readHandler
+}
+
 func InitRoutes(h *Handler) *http.ServeMux {
 	mux := http.NewServeMux()
 
@@ -46,10 +56,10 @@ func InitRoutes(h *Handler) *http.ServeMux {
 	mux.HandleFunc("POST /film", h.filmHandler.Add)
 	mux.HandleFunc("PUT /film/{id}", h.filmHandler.Update)
 	mux.HandleFunc("DELETE /film/{id}", h.filmHandler.Delete)
-	mux.HandleFunc("GET /films", h.filmHandler.GetAll)
+	//mux.HandleFunc("GET /films", h.filmHandler.GetAll)
 
-	//// поиск фильма по фрагменту названия, по фрагменту имени актера
-	//mux.HandleFunc("GET /film", h.filmHandler.GetByFilter)
+	mux.HandleFunc("GET /film/search/{fragment}", h.filmHandler.searchBy)
+	mux.HandleFunc("GET /films", h.filmHandler.readSorted)
 	return mux
 }
 
