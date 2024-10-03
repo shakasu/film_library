@@ -119,13 +119,19 @@ func (handler FilmHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if !authReader(w, r, handler.repo) {
 		return
 	}
-	actors, err := handler.repo.FilmRepo.GetAll()
+
+	sortBy, ascending, err := readGetAllQueryParams(w, r)
+	if err != nil {
+		return
+	}
+
+	films, err := handler.repo.FilmRepo.GetAll(sortBy, ascending)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	j, err := json.Marshal(actors)
+	j, err := json.Marshal(films)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -139,27 +145,25 @@ func (handler FilmHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler FilmHandler) searchBy(w http.ResponseWriter, r *http.Request) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (handler FilmHandler) readSorted(w http.ResponseWriter, r *http.Request) {
 	if !authReader(w, r, handler.repo) {
 		return
 	}
 
-	sortBy, ascending, err := readQueryParams(w, r)
-	if err != nil {
+	fragment := r.PathValue("fragment")
+	if fragment == "" {
+		msg := "field [searchBy] must not be empty"
+		log.Println(msg)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
-	actors, err := handler.repo.FilmRepo.ReadSorted(sortBy, ascending)
+	films, err := handler.repo.FilmRepo.SearchBy(fragment)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	j, err := json.Marshal(actors)
+	j, err := json.Marshal(films)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -170,10 +174,9 @@ func (handler FilmHandler) readSorted(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err.Error())
 	}
-
 }
 
-func readQueryParams(w http.ResponseWriter, r *http.Request) (string, bool, error) {
+func readGetAllQueryParams(w http.ResponseWriter, r *http.Request) (string, bool, error) {
 	var sortBy = r.URL.Query().Get("sortBy")
 	var ascendingStr = r.URL.Query().Get("ascending")
 

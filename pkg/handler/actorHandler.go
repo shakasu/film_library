@@ -114,7 +114,7 @@ func (handler ActorHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if !authReader(w, r, handler.repo) {
 		return
 	}
-	actors, err := handler.repo.ActorRepo.GetAll()
+	actors, err := handler.repo.ActorRepo.GetAll("name", false)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

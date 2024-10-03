@@ -96,7 +96,7 @@ func (r *ActorRepo) Delete(id int64) error {
 	return nil
 }
 
-func (r *ActorRepo) GetAll() ([]*model.Actor, error) {
+func (r *ActorRepo) GetAll(_ string, _ bool) ([]*model.Actor, error) {
 	selectActors := squirrel.
 		Select(actorColumnsWithId...).
 		From(actorTable)

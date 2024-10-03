@@ -8,7 +8,7 @@ import (
 
 type Repository struct {
 	ActorRepo crudRepository[model.ActorDto, model.Actor]
-	FilmRepo  crudAndReaderRepository[model.FilmDto, model.Film]
+	FilmRepo  crudAndSearchRepository[model.FilmDto, model.Film]
 	AuthRepo  *AuthRepository
 }
 
@@ -24,16 +24,15 @@ type crudRepository[T any, G any] interface {
 	Add(*T) (*G, error)
 	Update(*T, int64) (*G, error)
 	Delete(int64) error
-	GetAll() ([]*G, error)
+	GetAll(sortBy string, ascending bool) ([]*G, error)
 }
 
-type readerRepository[T any] interface {
+type searchRepository[T any] interface {
 	SearchBy(fragment string) ([]*T, error)
-	ReadSorted(sortBy string, ascending bool) ([]*T, error)
 }
-type crudAndReaderRepository[T any, G any] interface {
+type crudAndSearchRepository[T any, G any] interface {
 	crudRepository[T, G]
-	readerRepository[G]
+	searchRepository[G]
 }
 
 func isRecordExist(id int64, table string, db *sql.DB) (bool, error) {
