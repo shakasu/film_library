@@ -1,18 +1,17 @@
 package initial
 
 import (
-	"film_library/pkg/handler"
 	"log"
 	"net/http"
 	"time"
 )
 
-func Server(routs *handler.Handler, err error, addr string) error {
-	log.Printf("Запуск веб-сервера на http://localhost%s\n", addr)
+func Server(routs *http.ServeMux, err error, addr string) error {
+	log.Printf("Документация http://localhost%s/swagger/index.html\n", addr)
 
 	server := &http.Server{
 		Addr:           addr,
-		Handler:        handler.InitRoutes(routs),
+		Handler:        routs,
 		MaxHeaderBytes: 1 << 20,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,

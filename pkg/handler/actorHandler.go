@@ -17,6 +17,13 @@ func NewActorHandler(repo *repository.Repository) *ActorHandler {
 	return &ActorHandler{repo: repo}
 }
 
+// create actor godoc
+// @Summary Создание актера
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.ActorDto
+// @Router /actor [post]
 func (handler ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 	if !authWriter(w, r, handler.repo) {
 		return
