@@ -138,6 +138,9 @@ func authWriter(w http.ResponseWriter, r *http.Request, repo *repository.Reposit
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return false
 		}
+	} else {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return false
 	}
 	return true
 }
@@ -150,6 +153,9 @@ func authReader(w http.ResponseWriter, r *http.Request, repo *repository.Reposit
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return false
 		}
+	} else {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return false
 	}
 	return true
 }

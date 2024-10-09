@@ -9,11 +9,13 @@ import (
 	"log"
 )
 
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
+// @title Film library golang test task
+// @version 1.0
+// @description Это приложение управления базой данных "Фильмотека".
+// @contact.name   API Support
+// @contact.url https://t.me/shakasu
 // @host localhost:8080
-// @BasePath /v2
+// @securityDefinitions.basic  BasicAuth
 func main() {
 	config, err := initial.Cfg()
 
