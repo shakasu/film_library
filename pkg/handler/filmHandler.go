@@ -19,6 +19,14 @@ func NewFilmHandler(repo *repository.Repository) *FilmHandler {
 	return &FilmHandler{repo: repo}
 }
 
+// @Summary Создание фильма с привязкой актеров по ID
+// @Tags film
+// @Param data body model.FilmDto true "The input film struct"
+// @accept  json
+// @Produce  json
+// @Success 200
+// @Router /film [post]
+// @Security BasicAuth
 func (handler FilmHandler) Add(w http.ResponseWriter, r *http.Request) {
 	if !authWriter(w, r, handler.repo) {
 		return
@@ -56,6 +64,15 @@ func (handler FilmHandler) Add(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Редактирование фильма по ID с привязкой актеров по ID
+// @Tags film
+// @Param        id   path      int  true  "Film ID"
+// @Param data body model.FilmDto true "The input film struct"
+// @accept  json
+// @Produce  json
+// @Success 200
+// @Router /film/{id} [put]
+// @Security BasicAuth
 func (handler FilmHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if !authWriter(w, r, handler.repo) {
 		return
@@ -99,6 +116,12 @@ func (handler FilmHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Удаление фильма по ID
+// @Tags film
+// @Param        id   path      int  true  "Film ID"
+// @Success 200
+// @Router /film/{id} [delete]
+// @Security BasicAuth
 func (handler FilmHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if !authWriter(w, r, handler.repo) {
 		return
@@ -115,6 +138,14 @@ func (handler FilmHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// @Summary Получение списка всех фильмов
+// @Tags film
+// @Produce json
+// @Success 200 {array} model.Film
+// @Param sortBy    query string  false "доступные значения" Enums(name, release_date, rating)
+// @Param ascending query boolean false "доступные значения" Enums(true, false)
+// @Router /films [get]
+// @Security BasicAuth
 func (handler FilmHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if !authReader(w, r, handler.repo) {
 		return
@@ -144,6 +175,13 @@ func (handler FilmHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Поиск фильма по фрагменту имени фильма\актера
+// @Tags film
+// @Param        fragment   path      string  true  "Film ID"
+// @Produce json
+// @Success 200 {array} model.Film
+// @Router /film/search/{fragment} [get]
+// @Security BasicAuth
 func (handler FilmHandler) searchBy(w http.ResponseWriter, r *http.Request) {
 	if !authReader(w, r, handler.repo) {
 		return

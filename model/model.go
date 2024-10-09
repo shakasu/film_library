@@ -28,6 +28,5 @@ type FilmDto struct {
 type ActorDto struct {
 	Name        string `json:"name"`
 	Gender      string `json:"gender"`
-	DateOfBirth string `json:"date_Of_birth"`
-	//FilmIds     []int64 `json:"filmIds"`
+	DateOfBirth string `json:"date_of_birth"`
 }

@@ -1,33 +1,264 @@
 definitions:
-  model.ActorDto:
+  model.Actor:
     properties:
       date_Of_birth:
+        type: string
+      films:
+        items:
+          $ref: '#/definitions/model.Film'
+        type: array
+      gender:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.ActorDto:
+    properties:
+      date_of_birth:
         type: string
       gender:
         type: string
       name:
         type: string
     type: object
+  model.Film:
+    properties:
+      actors:
+        items:
+          $ref: '#/definitions/model.Actor'
+        type: array
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      rating:
+        type: integer
+      release_date:
+        type: string
+    type: object
+  model.FilmDto:
+    properties:
+      actorIds:
+        items:
+          type: integer
+        type: array
+      description:
+        type: string
+      name:
+        type: string
+      rating:
+        type: integer
+      release_date:
+        type: string
+    type: object
+host: localhost:8080
 info:
-  contact: {}
+  contact:
+    name: API Support
+    url: https://t.me/shakasu
+  description: Это приложение управления базой данных "Фильмотека".
+  title: Film library golang test task
+  version: "1.0"
 paths:
   /actor:
     post:
       consumes:
       - application/json
+      parameters:
+      - description: The input actor struct
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.ActorDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - BasicAuth: []
+      summary: Создание актера
+      tags:
+      - actor
+  /actor/{id}:
+    delete:
+      parameters:
+      - description: Actor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+      security:
+      - BasicAuth: []
+      summary: Удаление актера по ID
+      tags:
+      - actor
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Actor ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: The input actor struct
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.ActorDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - BasicAuth: []
+      summary: Редактирование актера по ID
+      tags:
+      - actor
+  /actors:
+    get:
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.ActorDto'
-      summary: Создание актера
+            items:
+              $ref: '#/definitions/model.Actor'
+            type: array
+      security:
+      - BasicAuth: []
+      summary: Получение списка всех актеров
       tags:
-      - Auth
+      - actor
+  /film:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: The input film struct
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.FilmDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - BasicAuth: []
+      summary: Создание фильма с привязкой актеров по ID
+      tags:
+      - film
+  /film/{id}:
+    delete:
+      parameters:
+      - description: Film ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+      security:
+      - BasicAuth: []
+      summary: Удаление фильма по ID
+      tags:
+      - film
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Film ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: The input film struct
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/model.FilmDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - BasicAuth: []
+      summary: Редактирование фильма по ID с привязкой актеров по ID
+      tags:
+      - film
+  /film/search/{fragment}:
+    get:
+      parameters:
+      - description: Film ID
+        in: path
+        name: fragment
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Film'
+            type: array
+      security:
+      - BasicAuth: []
+      summary: Поиск фильма по фрагменту имени фильма\актера
+      tags:
+      - film
+  /films:
+    get:
+      parameters:
+      - description: доступные значения
+        enum:
+        - name
+        - release_date
+        - rating
+        in: query
+        name: sortBy
+        type: string
+      - description: доступные значения
+        enum:
+        - true
+        - false
+        in: query
+        name: ascending
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Film'
+            type: array
+      security:
+      - BasicAuth: []
+      summary: Получение списка всех фильмов
+      tags:
+      - film
 securityDefinitions:
-  ApiKeyAuth:
-    in: header
-    name: Authorization
-    type: apiKey
+  BasicAuth:
+    type: basic
 swagger: "2.0"

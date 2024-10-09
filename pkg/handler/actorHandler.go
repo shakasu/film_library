@@ -17,13 +17,14 @@ func NewActorHandler(repo *repository.Repository) *ActorHandler {
 	return &ActorHandler{repo: repo}
 }
 
-// create actor godoc
 // @Summary Создание актера
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Success 200 {object} model.ActorDto
+// @Tags actor
+// @Param data body model.ActorDto true "The input actor struct"
+// @accept  json
+// @Produce  json
+// @Success 200
 // @Router /actor [post]
+// @Security BasicAuth
 func (handler ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 	if !authWriter(w, r, handler.repo) {
 		return
@@ -60,6 +61,15 @@ func (handler ActorHandler) Add(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Редактирование актера по ID
+// @Tags actor
+// @Param        id   path      int  true  "Actor ID"
+// @Param data body model.ActorDto true "The input actor struct"
+// @accept  json
+// @Produce  json
+// @Success 200
+// @Router /actor/{id} [put]
+// @Security BasicAuth
 func (handler ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if !authWriter(w, r, handler.repo) {
 		return
@@ -101,6 +111,12 @@ func (handler ActorHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Удаление актера по ID
+// @Tags actor
+// @Param        id   path      int  true  "Actor ID"
+// @Success 200
+// @Router /actor/{id} [delete]
+// @Security BasicAuth
 func (handler ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	if !authWriter(w, r, handler.repo) {
 		return
@@ -117,6 +133,12 @@ func (handler ActorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// @Summary Получение списка всех актеров
+// @Tags actor
+// @Produce  json
+// @Success 200 {array} model.Actor
+// @Router /actors [get]
+// @Security BasicAuth
 func (handler ActorHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if !authReader(w, r, handler.repo) {
 		return
